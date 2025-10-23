@@ -3,7 +3,7 @@ import '../style/Home.scss'
 
 function Home() {
   return (
-    <main>
+    <main className='home'>
         <button className='secondary' onClick={() => window.location.href = '/dashboard'}>
             CONSULTER LE TABLEAU DE BORD
         </button>
