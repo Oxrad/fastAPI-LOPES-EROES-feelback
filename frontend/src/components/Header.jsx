@@ -6,7 +6,7 @@ function Header() {
     <header>
         <div className='header-content'>
             <img src="/logo.png" alt="FeelBack Logo" className="logo" />
-            <h1>FeelBack</h1>
+            <h2>FeelBack</h2>
             <h3>Le questionnaire de satisfaction</h3>
         </div>
     </header>
