@@ -22,7 +22,7 @@ function Dashboard() {
   return (
     <main className='dashboard'>
       <button className='secondary' onClick={() => window.location.href = '/'}>REVENIR SUR LA PAGE D'ACCUEIL</button>
-      <h1>Tableau de bord</h1>
+      <h2>Tableau de bord</h2>
       <p>Cette page regroupe des statistiques moyennes sur l'ensemble des réponses données</p>
 
 

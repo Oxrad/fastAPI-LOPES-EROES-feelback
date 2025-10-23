@@ -40,7 +40,7 @@ function FeelbackForm() {
   return (
     <main className='feelback-form'>
       <button className='secondary' onClick={() => window.location.href = '/'}>REVENIR SUR LA PAGE D'ACCUEIL</button>
-      <h1>Donner votre avis</h1>
+      <h2>Donner votre avis</h2>
       {loading ? <p>Loading...</p> : (
         <form onSubmit={handleSubmit}>
           {data.length > 0 ?
