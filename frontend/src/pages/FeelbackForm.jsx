@@ -1,60 +1,104 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../style/FeelbackForm.scss'
 
 function FeelbackForm() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const orderId = searchParams.get('order_id')
 
-  const [data, setData] = useState([])
+  const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    let fakeData = [
-      { id: 1, question: "Évaluer de 1 à 5 le respect du délai de livraison", maximum_grade: 5 },
-      { id: 2, question: "Évaluer de 1 à 5 l'état de votre colis à sa réception", maximum_grade: 5 },
-      { id: 3, question: "Évaluer de 1 à 5 le comportement du livreur", maximum_grade: 5 }
-    ]
-    setData(fakeData)
-    setLoading(false)
+    // Récupérer les questions depuis l'API
+    fetch('http://localhost:8000/api/questions')
+      .then(res => res.json())
+      .then(data => {
+        setQuestions(data)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error('Erreur:', error)
+        setLoading(false)
+      })
   }, [])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const formData = new FormData(e.target)
-    const responses = []
+    if (!orderId) {
+      alert('Aucune commande associée')
+      return
+    }
 
-    // mettre question_id et la valeur sélectionnée dans responses
+    setSubmitting(true)
+
+    const formData = new FormData(e.target)
+    const grades = []
+
+    // Construire le tableau de grades
     for (let [key, value] of formData.entries()) {
       const questionId = parseInt(key.split('-')[1], 10)
-      responses.push({ question_id: questionId, grade: parseInt(value, 10) })
+      grades.push({ 
+        question_id: questionId, 
+        grade: parseInt(value, 10) 
+      })
     }
     
-    console.log("Réponses utilisateur :", responses)
+    console.log("Données à envoyer :", { grades })
 
+    try {
+      const response = await fetch(`http://localhost:8000/api/orders/${orderId}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ grades })
+      })
 
-    // Tu peux ici faire une requête API :
-    // fetch('/api/submit-feedback', { method: 'POST', body: JSON.stringify(responses) })
-    //   .then(res => res.json())
-    //   .then(data => console.log('Réponse serveur:', data))
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'envoi du feedback')
+      }
+
+      const result = await response.json()
+      console.log('Réponse serveur:', result)
+      
+      alert('Merci pour votre feedback ! ✅')
+      navigate('/dashboard')
+      
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('Erreur lors de l\'envoi du feedback')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <main className='feelback-form'>
-      <button className='secondary' onClick={() => window.location.href = '/'}>REVENIR SUR LA PAGE D'ACCUEIL</button>
+      <button className='secondary' onClick={() => navigate('/')}>
+        REVENIR SUR LA PAGE D'ACCUEIL
+      </button>
       <h1>Donner votre avis</h1>
-      {loading ? <p>Loading...</p> : (
+      
+      {loading ? (
+        <p>Chargement des questions...</p>
+      ) : (
         <form onSubmit={handleSubmit}>
-          {data.length > 0 ?
-            data.map((item) => (
-              <div key={item.id} className="question-block">
-                <label htmlFor={`question-${item.id}`}>{item.question}</label>
+          {questions.length > 0 ? (
+            questions.map((question) => (
+              <div key={question.id} className="question-block">
+                <label htmlFor={`question-${question.id}`}>{question.title}</label>
                 <div className="radio-group">
-                  {[...Array(item.maximum_grade)].map((_, i) => {
+                  {[...Array(question.maximum_grade)].map((_, i) => {
                     const value = i + 1;
                     return (
                       <label key={value}>
                         <input
                           type="radio"
-                          name={`question-${item.id}`}
+                          name={`question-${question.id}`}
                           required
                           value={value}
                         />
@@ -65,10 +109,17 @@ function FeelbackForm() {
                 </div>
               </div>
             ))
-
-            : <p>Aucune question disponible.</p>
-          }
-          <button type="submit" className='primary'>ENVOYER</button>
+          ) : (
+            <p>Aucune question disponible.</p>
+          )}
+          
+          <button 
+            type="submit" 
+            className='primary'
+            disabled={submitting}
+          >
+            {submitting ? 'ENVOI EN COURS...' : 'ENVOYER'}
+          </button>
         </form>
       )}
     </main>
